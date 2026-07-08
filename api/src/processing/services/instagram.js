@@ -45,6 +45,9 @@ const cachedDtsg = {
     expiry: 0
 }
 
+const instagramGraphVideoTypename = "GraphVideo";
+const instagramMediaTypeVideo = 2;
+
 const getNumberFromQuery = (name, data) => {
     const s = data?.match(new RegExp(name + '=(\\d+)'))?.[1];
     if (+s) return +s;
@@ -247,6 +250,33 @@ export default function instagram(obj) {
         };
     }
 
+    async function requestLoggedOutGQL(id, mediaId) {
+        const { headers, body } = await getGQLParams(id);
+
+        const req = await fetch('https://www.instagram.com/api/graphql', {
+            method: 'POST',
+            dispatcher,
+            headers: {
+                ...commonHeaders,
+                ...headers,
+                'content-type': 'application/x-www-form-urlencoded',
+                'X-FB-Friendly-Name': 'PolarisLoggedOutDesktopWWWPostRootContentQuery',
+            },
+            body: new URLSearchParams({
+                lsd: body.lsd,
+                fb_api_caller_class: 'RelayModern',
+                fb_api_req_friendly_name: 'PolarisLoggedOutDesktopWWWPostRootContentQuery',
+                server_timestamps: true,
+                variables: JSON.stringify({ media_id: mediaId.split('_')[0] }),
+                doc_id: '27130156389949648'
+            }).toString()
+        });
+
+        return req.json()
+                  .then(r => r?.data?.xig_polaris_media?.if_not_gated_logged_out)
+                  .catch(() => null);
+    }
+
     async function getErrorContext(id) {
         try {
             const { headers, body } = await getGQLParams(id);
@@ -349,7 +379,9 @@ export default function instagram(obj) {
             }
         }
 
-        if (shortcodeMedia?.display_url) {
+        const isVideo = shortcodeMedia?.is_video || shortcodeMedia?.__typename === instagramGraphVideoTypename;
+
+        if (shortcodeMedia?.display_url && !isVideo) {
             return {
                 urls: shortcodeMedia.display_url,
                 isPhoto: true,
@@ -404,7 +436,7 @@ export default function instagram(obj) {
                 filename: `instagram_${id}.mp4`,
                 audioFilename: `instagram_${id}_audio`
             }
-        } else if (data.image_versions2?.candidates) {
+        } else if (data.image_versions2?.candidates && data.media_type !== instagramMediaTypeVideo) {
             return {
                 urls: data.image_versions2.candidates[0].url,
                 isPhoto: true,
@@ -414,9 +446,20 @@ export default function instagram(obj) {
     }
 
     async function getPost(id, alwaysProxy) {
-        const hasData = (data) => data
-                                    && data.gql_data !== null
-                                    && data?.gql_data?.xdt_shortcode_media !== null;
+        const hasData = (data) => {
+            const shortcodeMedia = data?.gql_data?.shortcode_media || data?.gql_data?.xdt_shortcode_media;
+            const isVideo = shortcodeMedia?.is_video || shortcodeMedia?.__typename === instagramGraphVideoTypename;
+
+            return data
+                && (
+                    shortcodeMedia?.edge_sidecar_to_children
+                    || shortcodeMedia?.video_url
+                    || (shortcodeMedia?.display_url && !isVideo)
+                    || data.carousel_media
+                    || data.video_versions
+                    || (data.image_versions2?.candidates && data.media_type !== instagramMediaTypeVideo)
+                );
+        }
         let data, result;
         try {
             const cookie = getCookie('instagram');
@@ -437,12 +480,15 @@ export default function instagram(obj) {
             if (media_id && cookie && !hasData(data)) data = await requestMobileApi(media_id, { cookie });
 
             // html embed (no cookie, cookie)
-            if (!hasData(data)) data = await requestHTML(id);
-            if (!hasData(data) && cookie) data = await requestHTML(id, cookie);
+            if (!hasData(data)) data = await requestHTML(id).catch(() => {});
+            if (!hasData(data) && cookie) data = await requestHTML(id, cookie).catch(() => {});
 
             // web app graphql api (no cookie, cookie)
-            if (!hasData(data)) data = await requestGQL(id);
-            if (!hasData(data) && cookie) data = await requestGQL(id, cookie);
+            if (!hasData(data)) data = await requestGQL(id).catch(() => {});
+            if (!hasData(data) && cookie) data = await requestGQL(id, cookie).catch(() => {});
+
+            // logged-out web app graphql api
+            if (media_id && !hasData(data)) data = await requestLoggedOutGQL(id, media_id).catch(() => {});
         } catch {}
 
         if (!hasData(data)) {
