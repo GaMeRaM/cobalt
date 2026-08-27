@@ -63,6 +63,15 @@
         }
     },
     {
+        "name": "reel with media id only in page data",
+        "url": "https://www.instagram.com/reels/DcB4M-rvRlV/",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "redirect"
+        }
+    },
+    {
         "name": "regular video",
         "url": "https://www.instagram.com/p/CmCVWoIr9OH/",
         "params": {},

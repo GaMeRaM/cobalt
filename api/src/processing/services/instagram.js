@@ -166,6 +166,8 @@ export default function instagram(obj) {
         });
 
         const html = await req.text();
+        // oEmbed can hide public posts, but their page still exposes this id
+        const mediaId = html.match(/"page_id":"postPage_(\d+)"/)?.[1];
         const siteData = getObjectFromEntries('SiteData', html);
         const polarisSiteData = getObjectFromEntries('PolarisSiteData', html);
         const webConfig = getObjectFromEntries('DGWWebConfig', html);
@@ -183,6 +185,7 @@ export default function instagram(obj) {
         ].filter(a => a).join('; ');
 
         return {
+            mediaId,
             headers: {
                 'x-ig-app-id': webConfig?.appId || '936619743392459',
                 'X-FB-LSD': lsd,
@@ -216,7 +219,7 @@ export default function instagram(obj) {
     }
 
     async function requestGQL(id, cookie) {
-        const { headers, body } = await getGQLParams(id, cookie);
+        const { mediaId, headers, body } = await getGQLParams(id, cookie);
 
         const req = await fetch('https://www.instagram.com/graphql/query', {
             method: 'POST',
@@ -244,6 +247,7 @@ export default function instagram(obj) {
         });
 
         return {
+            mediaId,
             gql_data: await req.json()
                         .then(r => r.data)
                         .catch(() => null)
@@ -480,8 +484,14 @@ export default function instagram(obj) {
             if (media_id && cookie && !hasData(data)) data = await requestMobileApi(media_id, { cookie });
 
             // prefer graphql because embeds can omit video urls
-            if (!hasData(data)) data = await requestGQL(id).catch(() => {});
-            if (!hasData(data) && cookie) data = await requestGQL(id, cookie).catch(() => {});
+            if (!hasData(data)) {
+                data = await requestGQL(id).catch(() => {});
+                media_id ||= data?.mediaId;
+            }
+            if (!hasData(data) && cookie) {
+                data = await requestGQL(id, cookie).catch(() => {});
+                media_id ||= data?.mediaId;
+            }
 
             // logged-out web app graphql api
             if (media_id && !hasData(data)) data = await requestLoggedOutGQL(id, media_id).catch(() => {});
