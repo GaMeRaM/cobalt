@@ -109,20 +109,30 @@ export default function instagram(obj) {
         return data.json();
     }
 
-    async function getMediaId(id, { cookie, token } = {}) {
+    async function getMediaContext(id, { cookie, token } = {}) {
         const oembedURL = new URL('https://i.instagram.com/api/v1/oembed/');
         oembedURL.searchParams.set('url', `https://www.instagram.com/p/${id}/`);
 
-        const oembed = await fetch(oembedURL, {
+        const oembedText = await fetch(oembedURL, {
             headers: {
                 ...mobileHeaders,
                 ...( token && { authorization: `Bearer ${token}` } ),
                 cookie
             },
             dispatcher
-        }).then(r => r.json()).catch(() => {});
+        }).then(r => r.text()).catch(() => {});
 
-        return oembed?.media_id;
+        let oembed;
+        try {
+            oembed = JSON.parse(oembedText);
+        } catch {}
+
+        return {
+            error: oembed?.blocks_logging_data === 'MIN_AGE_ACCOUNT'
+                ? 'content.post.age'
+                : undefined,
+            mediaId: oembed?.media_id || oembedText?.match(/"media_igid":\s*(\d+)/)?.[1]
+        };
     }
 
     async function requestMobileApi(mediaId, { cookie, token } = {}) {
@@ -464,7 +474,7 @@ export default function instagram(obj) {
                     || (data.image_versions2?.candidates && data.media_type !== instagramMediaTypeVideo)
                 );
         }
-        let data, result;
+        let data, result, fallbackError;
         try {
             const cookie = getCookie('instagram');
 
@@ -472,9 +482,20 @@ export default function instagram(obj) {
             const token = bearer?.values()?.token;
 
             // get media_id for mobile api, three methods
-            let media_id = await getMediaId(id);
-            if (!media_id && token) media_id = await getMediaId(id, { token });
-            if (!media_id && cookie) media_id = await getMediaId(id, { cookie });
+            let mediaContext = await getMediaContext(id);
+            let media_id = mediaContext?.mediaId;
+            fallbackError = mediaContext?.error;
+
+            if (!media_id && token) {
+                mediaContext = await getMediaContext(id, { token });
+                media_id = mediaContext?.mediaId;
+                fallbackError ||= mediaContext?.error;
+            }
+            if (!media_id && cookie) {
+                mediaContext = await getMediaContext(id, { cookie });
+                media_id = mediaContext?.mediaId;
+                fallbackError ||= mediaContext?.error;
+            }
 
             // mobile api (bearer)
             if (media_id && token) data = await requestMobileApi(media_id, { token });
@@ -502,6 +523,7 @@ export default function instagram(obj) {
         } catch {}
 
         if (!hasData(data)) {
+            if (fallbackError) return { error: fallbackError };
             return getErrorContext(id);
         }
 

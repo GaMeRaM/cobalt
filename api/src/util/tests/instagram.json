@@ -72,6 +72,16 @@
         }
     },
     {
+        "name": "age restricted reel",
+        "url": "https://www.instagram.com/reels/Da4ptnBOzY7/",
+        "params": {},
+        "expected": {
+            "code": 400,
+            "status": "error",
+            "errorCode": "error.api.content.post.age"
+        }
+    },
+    {
         "name": "regular video",
         "url": "https://www.instagram.com/p/CmCVWoIr9OH/",
         "params": {},
