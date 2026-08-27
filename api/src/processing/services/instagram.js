@@ -479,16 +479,16 @@ export default function instagram(obj) {
             if (media_id && !hasData(data)) data = await requestMobileApi(media_id);
             if (media_id && cookie && !hasData(data)) data = await requestMobileApi(media_id, { cookie });
 
-            // html embed (no cookie, cookie)
-            if (!hasData(data)) data = await requestHTML(id).catch(() => {});
-            if (!hasData(data) && cookie) data = await requestHTML(id, cookie).catch(() => {});
-
-            // web app graphql api (no cookie, cookie)
+            // prefer graphql because embeds can omit video urls
             if (!hasData(data)) data = await requestGQL(id).catch(() => {});
             if (!hasData(data) && cookie) data = await requestGQL(id, cookie).catch(() => {});
 
             // logged-out web app graphql api
             if (media_id && !hasData(data)) data = await requestLoggedOutGQL(id, media_id).catch(() => {});
+
+            // html embed (no cookie, cookie)
+            if (!hasData(data)) data = await requestHTML(id).catch(() => {});
+            if (!hasData(data) && cookie) data = await requestHTML(id, cookie).catch(() => {});
         } catch {}
 
         if (!hasData(data)) {

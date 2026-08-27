@@ -27,6 +27,42 @@
         }
     },
     {
+        "name": "reel with no video url in embed",
+        "url": "https://www.instagram.com/reel/DbMAB0Whlv8/?igsi=MWlidTBhcTJtN3hhZA==",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "redirect"
+        }
+    },
+    {
+        "name": "another reel with no video url in embed",
+        "url": "https://www.instagram.com/reel/DcNKjCZuRZh/",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "redirect"
+        }
+    },
+    {
+        "name": "square reel with no video url in embed",
+        "url": "https://www.instagram.com/reel/Dbz6lvBodNt/",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "redirect"
+        }
+    },
+    {
+        "name": "reel mistaken for a carousel",
+        "url": "https://www.instagram.com/reel/DZuTdEoPFUW/",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "redirect"
+        }
+    },
+    {
         "name": "regular video",
         "url": "https://www.instagram.com/p/CmCVWoIr9OH/",
         "params": {},
