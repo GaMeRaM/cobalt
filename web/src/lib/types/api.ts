@@ -22,6 +22,7 @@ export type CobaltErrorResponse = {
 type CobaltPartialURLResponse = {
     url: string,
     filename: string,
+    thumb?: string,
 }
 
 type CobaltPickerResponse = {

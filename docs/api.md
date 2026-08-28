@@ -109,6 +109,7 @@ the response will always be a JSON object containing the `status` key, which is 
 | `status`     | `string` | `tunnel / redirect`                                        |
 | `url`        | `string` | url for the cobalt tunnel, or redirect to an external link |
 | `filename`   | `string` | cobalt-generated filename for the file being downloaded    |
+| `thumb`      | `string` | source-provided video thumbnail URL (optional)              |
 
 ### local processing response
 | key          | type       | value                                                         |

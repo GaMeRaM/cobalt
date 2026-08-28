@@ -39,14 +39,16 @@ export function createResponse(responseType, responseData) {
             case "redirect":
                 response = {
                     url: responseData?.url,
-                    filename: responseData?.filename
+                    filename: responseData?.filename,
+                    thumb: responseData?.thumb
                 }
                 break;
 
             case "tunnel":
                 response = {
                     url: createStream(responseData),
-                    filename: responseData?.filename
+                    filename: responseData?.filename,
+                    thumb: responseData?.thumb
                 }
                 break;
 

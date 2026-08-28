@@ -72,6 +72,16 @@
         }
     },
     {
+        "name": "large reel with thumbnail",
+        "url": "https://www.instagram.com/reel/DavEcdaojM9/",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "redirect",
+            "hasThumb": true
+        }
+    },
+    {
         "name": "age restricted reel",
         "url": "https://www.instagram.com/reels/Da4ptnBOzY7/",
         "params": {},

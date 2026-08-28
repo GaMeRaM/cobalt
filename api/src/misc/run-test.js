@@ -39,6 +39,10 @@ export async function runTest(url, params, expect) {
         error.push(`status code mismatch: ${detail}`);
     }
 
+    if (expect.hasThumb && !result.body?.thumb) {
+        error.push('expected response to include a thumbnail');
+    }
+
     if (error.length) {
         if (result.body.text) {
             error.push(`error message: ${result.body.text}`);

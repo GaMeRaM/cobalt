@@ -388,6 +388,7 @@ export default function instagram(obj) {
         if (shortcodeMedia?.video_url) {
             return {
                 urls: shortcodeMedia.video_url,
+                thumb: shortcodeMedia.display_url,
                 filename: `instagram_${id}.mp4`,
                 audioFilename: `instagram_${id}_audio`
             }
@@ -447,6 +448,7 @@ export default function instagram(obj) {
             const video = data.video_versions.reduce((a, b) => a.width * a.height < b.width * b.height ? b : a)
             return {
                 urls: video.url,
+                thumb: data.image_versions2?.candidates?.[0]?.url,
                 filename: `instagram_${id}.mp4`,
                 audioFilename: `instagram_${id}_audio`
             }
