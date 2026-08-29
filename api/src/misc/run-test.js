@@ -43,6 +43,11 @@ export async function runTest(url, params, expect) {
         error.push('expected response to include a thumbnail');
     }
 
+    if (expect.filename && expect.filename !== result.body?.filename) {
+        const detail = `${expect.filename} (expected) != ${result.body?.filename} (actual)`;
+        error.push(`filename mismatch: ${detail}`);
+    }
+
     if (error.length) {
         if (result.body.text) {
             error.push(`error message: ${result.body.text}`);

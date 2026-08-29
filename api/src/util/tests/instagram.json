@@ -82,6 +82,17 @@
         }
     },
     {
+        "name": "reel mistaken for a photo",
+        "url": "https://www.instagram.com/reel/Dcj9q7MPqVR/",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "redirect",
+            "hasThumb": true,
+            "filename": "instagram_Dcj9q7MPqVR.mp4"
+        }
+    },
+    {
         "name": "age restricted reel",
         "url": "https://www.instagram.com/reels/Da4ptnBOzY7/",
         "params": {},
