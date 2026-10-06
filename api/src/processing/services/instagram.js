@@ -287,7 +287,15 @@ export default function instagram(obj) {
         });
 
         return req.json()
-                  .then(r => r?.data?.xig_polaris_media?.if_not_gated_logged_out)
+                  .then(r => {
+                      const media = r?.data?.xig_polaris_media;
+                      return {
+                          data: media?.if_not_gated_logged_out,
+                          error: media?.gating_ruling?.title === 'Age-restricted content'
+                              ? 'content.post.age'
+                              : undefined,
+                      };
+                  })
                   .catch(() => null);
     }
 
@@ -517,7 +525,11 @@ export default function instagram(obj) {
             }
 
             // logged-out web app graphql api
-            if (media_id && !hasData(data)) data = await requestLoggedOutGQL(id, media_id).catch(() => {});
+            if (media_id && !hasData(data)) {
+                const loggedOut = await requestLoggedOutGQL(id, media_id).catch(() => {});
+                data = loggedOut?.data;
+                fallbackError ||= loggedOut?.error;
+            }
 
             // html embed (no cookie, cookie)
             if (!hasData(data)) data = await requestHTML(id).catch(() => {});
